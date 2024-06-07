@@ -19,9 +19,9 @@
 #define WALL_SPEED     2
 
 #define MAX_LIFE       9
-#define INVINCIBLE_TIME 10
+#define INVINCIBLE_TIME 45
 
-#define TARGET_FPS 30
+#define TARGET_FPS 40
 #define FRAME_TIME_MS (1000 / TARGET_FPS)
 
 #define MAX_TAIL_LENGTH 20
@@ -131,6 +131,7 @@ void draw_wall(void) {
   LCD_Fill(wall_x, 40, wall_x + WALL_WIDTH, wall_y-space , WALL_COLOR);
   LCD_Fill(wall1_x, wall1_y, wall1_x + WALL_WIDTH, 160, WALL_COLOR);
   LCD_Fill(wall1_x, 40, wall1_x + WALL_WIDTH, wall1_y-space , WALL_COLOR);
+  LCD_DrawRectangle(0,41,79,159,WHITE);
 }
 
 void draw_life(void) {
@@ -277,7 +278,7 @@ void game_loop(void) {
 
 void game_init(void) {
   LCD_Clear(BLACK);
-
+  
   player_x = PLAYER_INIT_X;
   player_y = PLAYER_INIT_Y;
   player_life = MAX_LIFE;
