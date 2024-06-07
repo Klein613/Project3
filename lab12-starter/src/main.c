@@ -19,7 +19,7 @@
 #define WALL_SPEED     2
 
 #define MAX_LIFE       9
-#define INVINCIBLE_TIME 45
+#define INVINCIBLE_TIME 15
 
 #define TARGET_FPS 40
 #define FRAME_TIME_MS (1000 / TARGET_FPS)
