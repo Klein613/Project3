@@ -2,11 +2,12 @@
 #include "utils.h"
 #include "assembly/example.h"
 
+#include <string.h>
 #define SCREEN_WIDTH   80
 #define SCREEN_HEIGHT  160
 
-#define PLAYER_WIDTH   2
-#define PLAYER_HEIGHT  2
+#define PLAYER_WIDTH   1
+#define PLAYER_HEIGHT  1
 #define PLAYER_SPEED   5
 #define PLAYER_COLOR   YELLOW
 #define PLAYER_INIT_X  20
@@ -15,7 +16,7 @@
 
 
 #define WALL_WIDTH     5
-#define WALL_COLOR     RED
+#define WALL_COLOR     GREEN
 #define WALL_SPEED     2
 
 #define MAX_LIFE       9
@@ -72,7 +73,7 @@ void IO_init(void) {
 }
 
 void draw_player(void) {
-  u16 color = (player_invincible_time > 0) ? GREEN : PLAYER_COLOR;
+  u16 color = (player_invincible_time > 0) ? WHITE : PLAYER_COLOR;
   LCD_Fill(player_x, player_y, player_x + PLAYER_WIDTH, player_y + PLAYER_HEIGHT, color);
 }
 void update_player(void){
@@ -166,6 +167,11 @@ void update_walls(void) {
 
 int check_collision(void) {
   if (player_invincible_time > 0) {
+    if (player_y <= 40)
+    {
+      player_y = 40;
+      tail_y[tail_length] = 40;
+    }
     return 0;
   }
   
@@ -222,6 +228,15 @@ void game_loop(void) {
       player_y = PLAYER_INIT_Y;
       player_invincible_time = INVINCIBLE_TIME;
       player_velocity = 0;
+          // 清除上一帧的玩家尾巴
+      for (int i = 1; i < tail_length; i++) {
+        LCD_DrawLine(tail_x[i - 1], tail_y[i - 1], tail_x[i], tail_y[i], BLACK);
+      }
+      memset(tail_x, 0, sizeof(tail_x));
+      memset(tail_y, 0, sizeof(tail_y));
+      tail_length = 0;
+      tail_x[tail_length] = player_x;
+      tail_y[tail_length] = player_y;
     }
     
     // 清除上一帧的玩家位置
