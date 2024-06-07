@@ -11,8 +11,10 @@
 #define PLAYER_COLOR   YELLOW
 #define PLAYER_INIT_X  20
 #define PLAYER_INIT_Y  50
+#define GRAVITY 1
 
-#define WALL_WIDTH     10
+
+#define WALL_WIDTH     5
 #define WALL_COLOR     RED
 #define WALL_SPEED     2
 
@@ -35,6 +37,7 @@ int player_x, player_y;
 int player_life;
 int player_invincible_time = 0;
 int player_score = 0;
+int player_velocity = 0;
 
 int wall_x, wall_y;
 int wall1_x, wall1_y;
@@ -45,6 +48,13 @@ int space = 0;
 int start = 0;
 int difficulty_level = 0;
 int debounce_timer = 0;
+
+int prev_player_x;
+int prev_player_y;
+int prev_wall_x;
+int prev_wall_y;
+int prev_wall1_x;
+int prev_wall1_y;
 
 void Inp_init(void) {
   rcu_periph_clock_enable(RCU_GPIOA);
@@ -66,10 +76,29 @@ void draw_player(void) {
   LCD_Fill(player_x, player_y, player_x + PLAYER_WIDTH, player_y + PLAYER_HEIGHT, color);
 }
 void update_player(void){
+
+  if (Get_Button(JOY_LEFT)) {
+    player_velocity = -PLAYER_SPEED;
+  } 
+  else {
+    player_velocity += GRAVITY;
+  }
+
+  player_y += player_velocity;
+
   player_y += PLAYER_SPEED/2;
  if(player_x >= wall_x + WALL_WIDTH - WALL_SPEED && player_x < wall_x + WALL_WIDTH)
  {
     if(player_y + PLAYER_WIDTH <= wall_y - PLAYER_SPEED  && player_y - PLAYER_SPEED >= wall_y - space)
+    {
+
+      player_score++;
+      
+    }
+ }
+ if(player_x >= wall1_x + WALL_WIDTH - WALL_SPEED && player_x < wall1_x + WALL_WIDTH)
+ {
+    if(player_y + PLAYER_WIDTH <= wall1_y - PLAYER_SPEED  && player_y - PLAYER_SPEED >= wall1_y - space)
     {
 
       player_score++;
@@ -100,6 +129,8 @@ void update_player_tail(void) {
 void draw_wall(void) {
   LCD_Fill(wall_x, wall_y, wall_x + WALL_WIDTH, 160, WALL_COLOR);
   LCD_Fill(wall_x, 40, wall_x + WALL_WIDTH, wall_y-space , WALL_COLOR);
+  LCD_Fill(wall1_x, wall1_y, wall1_x + WALL_WIDTH, 160, WALL_COLOR);
+  LCD_Fill(wall1_x, 40, wall1_x + WALL_WIDTH, wall1_y-space , WALL_COLOR);
 }
 
 void draw_life(void) {
@@ -118,21 +149,17 @@ void draw_player_tail(void) {
   }
 }
 
-void player_control(void) {
-  if (Get_Button(JOY_LEFT) && player_x > 0) {
-    player_y -= PLAYER_SPEED*2;
-  }
-}
-
 
 void update_walls(void) {
   wall_x -= WALL_SPEED;
-
+  wall1_x -= WALL_SPEED;
   if (wall_x <= 0) {             ///////这对墙过了，再生成一堵新的//////
     wall_x =  SCREEN_WIDTH;
-    wall_y =  80 + rand() % (80);
-    wall1_x = wall_x;
-    wall1_y = wall_y - space;
+    wall_y =  100 + rand() % (60);
+  }
+  if (wall1_x <= 0) {             ///////这对墙过了，再生成一堵新的//////
+    wall1_x =  SCREEN_WIDTH;
+    wall1_y = 100 + rand() % (60);
   }
 }
 
@@ -144,6 +171,14 @@ int check_collision(void) {
   if (player_x + PLAYER_WIDTH > wall_x && player_x <= wall_x + WALL_WIDTH) 
   {
     if(player_y + PLAYER_WIDTH >= wall_y || player_y <= wall_y - space)
+    {
+      return 1;
+    }
+    
+  }
+  if (player_x + PLAYER_WIDTH > wall1_x && player_x <= wall1_x + WALL_WIDTH) 
+  {
+    if(player_y + PLAYER_WIDTH >= wall1_y || player_y <= wall1_y - space)
     {
       return 1;
     }
@@ -163,14 +198,16 @@ int check_collision(void) {
 void game_loop(void) {
   while (1) {
 
-    int prev_player_x = player_x;
-    int prev_player_y = player_y;
-    int prev_wall_x = wall_x;
-    int prev_wall_y = wall_y;
+    prev_player_x = player_x;
+    prev_player_y = player_y;
+    prev_wall_x = wall_x;
+    prev_wall_y = wall_y;
+    prev_wall1_x = wall1_x;
+    prev_wall1_y = wall1_y;
 
 
     start_time = get_timer_value();
-    player_control();
+    
     update_player();
     update_walls();
 
@@ -183,6 +220,7 @@ void game_loop(void) {
       player_x = PLAYER_INIT_X;
       player_y = PLAYER_INIT_Y;
       player_invincible_time = INVINCIBLE_TIME;
+      player_velocity = 0;
     }
     
     // 清除上一帧的玩家位置
@@ -194,6 +232,8 @@ void game_loop(void) {
     // 清除上一帧的墙位置
     LCD_Fill(prev_wall_x, prev_wall_y, prev_wall_x + WALL_WIDTH, 160, BLACK);
     LCD_Fill(prev_wall_x, 40, prev_wall_x + WALL_WIDTH, prev_wall_y - space, BLACK);
+    LCD_Fill(prev_wall1_x, prev_wall1_y, prev_wall1_x + WALL_WIDTH, 160, BLACK);
+    LCD_Fill(prev_wall1_x, 40, prev_wall1_x + WALL_WIDTH, prev_wall1_y - space, BLACK);
 
     // 绘制当前帧的墙位置
     draw_wall();
@@ -222,7 +262,8 @@ void game_loop(void) {
     prev_player_y = player_y;
     prev_wall_x = wall_x;
     prev_wall_y = wall_y;
-
+    prev_wall1_x = wall1_x;
+    prev_wall1_y = wall1_y;
 
     
     end_time = get_timer_value();
@@ -242,9 +283,9 @@ void game_init(void) {
   player_life = MAX_LIFE;
 
   wall_x =  SCREEN_WIDTH;
-  wall_y =  80 + rand() % (80);
-  wall1_x = wall_x;
-  wall1_y = wall_y - space;
+  wall_y =  100 + rand() % (60);
+  wall1_x = wall_x - 40;
+  wall1_y =  100 + rand() % (60);
 }
 
 void update_difficulty_display(void) {
